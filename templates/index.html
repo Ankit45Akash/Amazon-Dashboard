@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amazon Sales Pulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="bg-orbs"><i></i><i></i><i></i></div>
+
+<header class="top">
+  <div class="brand"><span class="logo">◈</span><div><b>Sales Pulse</b><small>Amazon customer &amp; revenue analytics</small></div></div>
+  <div class="actions">
+    <div class="live" id="liveBox"><span class="dot"></span><label>Live feed</label>
+      <label class="switch"><input type="checkbox" id="liveToggle"><span></span></label></div>
+    <button class="btn ghost" id="pullBtn">⟳ Pull from Amazon</button>
+    <a class="btn" href="/api/export">⬇ Excel</a>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="overview" class="active">Overview</button>
+  <button data-tab="sales">Sales</button>
+  <button data-tab="customers">Customers</button>
+  <button data-tab="orders">Orders &amp; New Entry</button>
+  <button data-tab="pipeline">Pipeline</button>
+</nav>
+
+<main>
+<!-- OVERVIEW -->
+<section id="tab-overview" class="tab active">
+  <div class="kpis" id="kpis"></div>
+  <div class="grid g2">
+    <div class="card"><h3>Revenue by category</h3><div class="ch"><canvas id="ovCat"></canvas></div></div>
+    <div class="card"><h3>Top products</h3><div class="ch"><canvas id="ovProd"></canvas></div></div>
+  </div>
+  <div class="card"><h3>Last 30 days <span class="muted">revenue &amp; orders</span></h3><div class="ch tall"><canvas id="ovTrend"></canvas></div></div>
+</section>
+
+<!-- SALES -->
+<section id="tab-sales" class="tab">
+  <div class="bar">
+    <div class="pills" id="periodPills">
+      <button data-p="daily" class="active">Daily</button><button data-p="weekly">Weekly</button>
+      <button data-p="monthly">Monthly</button><button data-p="yearly">Yearly</button>
+    </div>
+    <div class="pills" id="typePills">
+      <button data-t="bar" class="active">Bars</button><button data-t="line">Area</button>
+    </div>
+  </div>
+  <div class="kpis small" id="salesKpis"></div>
+  <div class="grid g32">
+    <div class="card"><h3 id="salesTitle">Daily sales</h3><div class="ch tall"><canvas id="salesMain"></canvas></div></div>
+    <div class="card"><h3>Category mix <span class="muted">in range</span></h3><div class="ch tall"><canvas id="salesCat"></canvas></div></div>
+  </div>
+  <div class="card"><h3>Orders per period</h3><div class="ch"><canvas id="salesOrders"></canvas></div></div>
+  <div class="card"><h3>Period table</h3><div class="tablewrap"><table id="salesTable"></table></div></div>
+</section>
+
+<!-- CUSTOMERS -->
+<section id="tab-customers" class="tab">
+  <div class="kpis small" id="custKpis"></div>
+  <div class="grid g2">
+    <div class="card"><h3>Customer segments</h3><div class="ch"><canvas id="custSeg"></canvas></div></div>
+    <div class="card"><h3>New customers <span class="muted">per month</span></h3><div class="ch"><canvas id="custNew"></canvas></div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3>Revenue by city</h3><div class="ch"><canvas id="custCity"></canvas></div></div>
+    <div class="card"><h3>Top 10 customers</h3><div class="tablewrap"><table id="custTable"></table></div></div>
+  </div>
+</section>
+
+<!-- ORDERS -->
+<section id="tab-orders" class="tab">
+  <div class="grid g-form">
+    <div class="card">
+      <h3>＋ New customer entry</h3>
+      <form id="entryForm" class="form">
+        <label>Customer name*<input name="customer_name" required></label>
+        <label>Email<input name="email" type="email" placeholder="optional, used as customer ID"></label>
+        <label>City<input name="city"></label>
+        <label>Product*<input name="product" required></label>
+        <div class="row2">
+          <label>Category<select name="category"><option>Electronics</option><option>Home</option><option>Fashion</option><option>Sports</option><option>Books</option><option>Grocery</option><option>Beauty</option><option>Other</option></select></label>
+          <label>Date<input name="date" type="date"></label>
+        </div>
+        <div class="row2">
+          <label>Quantity*<input name="qty" type="number" min="1" value="1" required></label>
+          <label>Unit price (₹)*<input name="unit_price" type="number" min="0" step="0.01" required></label>
+        </div>
+        <button class="btn" type="submit">Save to Excel</button>
+        <p id="formMsg" class="msg"></p>
+      </form>
+    </div>
+    <div class="card">
+      <div class="bar tight"><h3>Recent orders</h3><input id="search" class="search" placeholder="Search customer, product, city…"></div>
+      <div class="tablewrap tall"><table id="ordersTable"></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section id="tab-pipeline" class="tab">
+  <div class="grid g2">
+    <div class="card">
+      <h3>Pipeline flow</h3>
+      <div class="flow">
+        <div class="node" id="n1"><b>Amazon</b><small>SP-API / demo feed</small></div><span class="arrow">➜</span>
+        <div class="node" id="n2"><b>Transform</b><small>dedupe &amp; clean</small></div><span class="arrow">➜</span>
+        <div class="node" id="n3"><b>Excel</b><small>sales_data.xlsx</small></div><span class="arrow">➜</span>
+        <div class="node" id="n4"><b>Dashboard</b><small>charts</small></div>
+      </div>
+      <div class="kpis small" id="pipeKpis"></div>
+      <div class="bar tight">
+        <button class="btn" id="runNow">Run pipeline now</button>
+        <label class="inline">every <input type="number" id="interval" value="15" min="5"> sec in live mode</label>
+      </div>
+    </div>
+    <div class="card"><h3>Pipeline log</h3><div class="log" id="logBox"></div></div>
+  </div>
+</section>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
